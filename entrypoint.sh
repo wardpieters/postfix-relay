@@ -60,6 +60,20 @@ cat <<- EOF > /etc/postfix/main.cf
 	smtputf8_enable = no
 	EOF
 
+if [ -n "$OVERWRITE_FROM" ]; then
+	echo -e "sender_canonical_classes = envelope_sender, header_sender" >> /etc/postfix/main.cf
+	echo -e "sender_canonical_maps = regexp:/etc/postfix/sender_canonical_maps" >> /etc/postfix/main.cf
+	echo -e "smtp_header_checks = regexp:/etc/postfix/header_check" >> /etc/postfix/main.cf
+
+	cat <<- EOF > /etc/postfix/sender_canonical_maps
+	/.+/    $OVERWRITE_FROM
+	EOF
+
+	cat <<- EOF > /etc/postfix/header_check
+	/From:.*/ REPLACE From: $OVERWRITE_FROM
+	EOF
+fi
+
 # Generate default alias DB
 newaliases
 
